@@ -1,3 +1,7 @@
+"""
+Statichum // BrainzMash fork
+Version: 1.1
+"""
 import abc
 import collections
 import contextlib
@@ -81,23 +85,37 @@ def _get_rate_limiter(key=None):
             "Don't know how to instantiate {}. Defaulting to NullRateLimiter".format(limit_class))
         return limit.NullRateLimiter()
 
+# TADB URL FIX - STATICHUM // BranzMash public Proxy ***
+
 def response_url(url: str) -> str:
     """
-    Transforms a URL to a response URL, which can take into account things such as a hosted cache
-    for third-party services.
+    Rewrite TheAudioDB image and API URLs to BrainzMash proxy.
+    Also rewrite any legacy local proxy hostnames.
     """
+    if not url:
+        return url
+
     parsed = urlparse(url)
-    if parsed.netloc.endswith("theaudiodb.com"):
-        new_path = re.sub("^/images/media/", "", parsed.path)
-        old_parsed = parsed
-        parsed = parsed._replace(
-            netloc=CONFIG.IMAGE_CACHE_HOST,
-            path=f"v1/tadb/{new_path}"
-        )
-        logger.debug(f"Transformed {old_parsed.geturl()} to {parsed.geturl()}")
-    else:
-        logger.debug(f"Leaving {parsed.geturl()} as is")
-    return parsed.geturl()
+    netloc = parsed.netloc.lower()
+
+    # Rewrite TADB domains
+    if "theaudiodb.com" in netloc:
+        new_url = f"https://tadb.brainzmash.cc{parsed.path}"
+        if parsed.query:
+            new_url += f"?{parsed.query}"
+        logger.debug(f"TADB rewrite: {url} -> {new_url}")
+        return new_url
+
+    # Rewrite your old local proxy (optional but smart)
+    if "musicbrainz-docker-tadbproxy" in netloc:
+        new_url = f"https://tadb.brainzmash.cc{parsed.path}"
+        if parsed.query:
+            new_url += f"?{parsed.query}"
+        logger.debug(f"Legacy proxy rewrite: {url} -> {new_url}")
+        return new_url
+
+    return url
+
 
 class MixinBase(six.with_metaclass(abc.ABCMeta, object)):
     pass
@@ -447,35 +465,48 @@ class HttpProvider(Provider,
         if self.__session_lock is None:
             self.__session_lock = asyncio.Lock()
         return self.__session_lock
-    
+
+    # BrainzMash fix: Proper User-Agent for external APIs (Wiki etc.)
     async def _get_session(self):
         if self._session is None:
             async with self._session_lock:
                 logger.debug("Initializing AIOHTTP Session")
-                
-                self._session = aiohttp.ClientSession(timeout = aiohttp.ClientTimeout(total=CONFIG.EXTERNAL_TIMEOUT / 1000))
-                
+
+                headers = {
+                    "User-Agent": "BrainzMash-LidarrMetadata/1.0 (admin@brainzmash.cc)"
+                }
+
+                self._session = aiohttp.ClientSession(
+                    timeout=aiohttp.ClientTimeout(total=CONFIG.EXTERNAL_TIMEOUT),
+                    headers=headers
+                )
+
         return self._session
-            
+
     async def _del(self):
         session = await self._get_session()
         if session:
             await session.close()
-        
+
     def _count_request(self, result_type):
         if self._stats:
-            self._stats.metric('external_request', {result_type: 1}, tags={'provider': self._name})
+            self._stats.metric(
+                'external_request',
+                {result_type: 1},
+                tags={'provider': self._name}
+            )
 
     def _record_response_result(self, response, elapsed):
         if self._stats:
-            self._stats.metric('external',
-                               {
-                                   'response_time': elapsed
-                               },
-                               tags={
-                                   'provider': self._name,
-                                   'response_status_code': response.status
-                               })
+            self._stats.metric(
+                'external',
+                {'response_time': elapsed},
+                tags={
+                    'provider': self._name,
+                    'response_status_code': response.status
+                }
+            )
+
 
     async def get(self, url, raise_on_http_error=True, **kwargs):
         try:
@@ -522,9 +553,10 @@ class HttpProvider(Provider,
 class TheAudioDbProvider(HttpProvider,
                          ArtistOverviewMixin,
                          ArtistArtworkMixin):
+#statichum url/user agent/proxy fix for TADB
     def __init__(self,
                  api_key,
-                 base_url='theaudiodb.com/api/v1/json',
+                 base_url='tadb.brainzmash.cc/api/v1/json',
                  use_https=True,
                  session=None,
                  limiter=None):
@@ -608,8 +640,19 @@ class TheAudioDbProvider(HttpProvider,
         
     async def cache_results(self, mbid, results, ttl=CONFIG.CACHE_TTL['tadb']):
         results = results.get('artists', None)
-        if isinstance(results, list):
+
+        if isinstance(results, list) and results:
             results = results[0]
+
+    # --- statichum cachefix start ---
+        if isinstance(results, dict):
+            for k, v in results.items():
+                if isinstance(v, str) and (
+                    "theaudiodb.com" in v or
+                    "musicbrainz-docker-tadbproxy" in v
+                ):
+                    results[k] = response_url(v)
+    # --- statichum cachefix end ---
 
         await util.TADB_CACHE.set(mbid, results, ttl=ttl)
 
@@ -809,34 +852,60 @@ class FanArtTvProvider(HttpProvider,
         if url[-1] != '/':
             url += '/'
         url += mbid
-        url += '/?api_key={api_key}'.format(api_key=self._api_key)
+        url += '?api_key={api_key}'.format(api_key=self._api_key)
         return url
-
+# Statichum fanart parsing fix below ***
     @staticmethod
     def parse_album_images(response):
         """
         Parses album images to our expected format
-        :param response: API response
-        :return: List of images in our expected format
         """
-        images = {'Cover': util.first_key_item(response, 'albumcover'),
-                  'Disc': util.first_key_item(response, 'cdart')}
-        return [{'CoverType': key, 'Url': value['url'].replace('https', 'http')}
-                for key, value in images.items() if value]
+
+        def get_first(response, key):
+            value = response.get(key)
+            if isinstance(value, list) and value:
+                return value[0]
+            if isinstance(value, dict):
+                return next(iter(value.values()), None)
+            return None
+
+        images = {
+            'Cover': get_first(response, 'albumcover'),
+            'Disc': get_first(response, 'cdart')
+        }
+
+        return [
+            {'CoverType': key, 'Url': value['url']}
+            for key, value in images.items()
+            if value and 'url' in value
+        ]
 
     @staticmethod
     def parse_artist_images(response):
         """
         Parses artist images to our expected format
-        :param response: API response
-        :return: List of images in our expected format
         """
-        images = {'Banner': util.first_key_item(response, 'musicbanner'),
-                  'Fanart': util.first_key_item(response, 'artistbackground'),
-                  'Logo': util.first_key_item(response, 'hdmusiclogo'),
-                  'Poster': util.first_key_item(response, 'artistthumb')}
-        return [{'CoverType': key, 'Url': value['url'].replace('https', 'http')}
-                for key, value in images.items() if value]
+
+        def get_first(response, key):
+            value = response.get(key)
+            if isinstance(value, list) and value:
+                return value[0]
+            if isinstance(value, dict):
+                return next(iter(value.values()), None)
+            return None
+
+        images = {
+            'Banner': get_first(response, 'musicbanner'),
+            'Fanart': get_first(response, 'artistbackground'),
+            'Logo': get_first(response, 'hdmusiclogo'),
+            'Poster': get_first(response, 'artistthumb')
+        }
+
+        return [
+            {'CoverType': key, 'Url': value['url']}
+            for key, value in images.items()
+            if value and 'url' in value
+        ]
 
 class SpotifyAuthProvider(HttpProvider,
                           SpotifyAuthMixin):
