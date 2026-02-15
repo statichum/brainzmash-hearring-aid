@@ -403,7 +403,7 @@ nano ./local/compose/lmd-settings.yml
 statichum/brainzmash-hearring-aid:latest
 ```
 
-# 4. Restart the container stack
+## 4. Restart the container stack
 
 ```
 docker compose up -d
@@ -411,8 +411,8 @@ docker compose up -d
 
 ## 5. LMD stores image url’s for 30 days and wiki for 7, it may store invalid links from the old setup so we’ll clear all LMD caches:
 
--Enter the db contianer and clear LMD cache
-This only clears LMD cache tables — it does NOT affect your MusicBrainz database.
+- Enter the db contianer and clear LMD cache
+> This only clears LMD cache tables — it does NOT affect your MusicBrainz database.
 ```
 docker exec -it musicbrainz-docker-db-1 sh
 ```
