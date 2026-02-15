@@ -373,3 +373,42 @@ docker compose down -v && sleep 60 && docker compose up -d
 ---
 
 Enjoy your fully functional Lidarr instance again! 🎶🚀
+
+---
+
+
+# For those updating to this image from blampe's original image
+
+>If you're updating from blampe's blampe/lidarr.metadata:70a9707 image, follow the instructions below
+
+- cd to your musicbrainz docker folder, wherever that is for you:
+
+```cd /opt/docker/musicbrainz-docker```
+
+
+- Stop docker container
+
+```
+Docker compose down
+```
+
+- Change image name for lmd-settings.yml
+
+```
+nano ./local/compose/lmd-settings.yml
+Change image to xxxxxxxxxxxxxxxx
+```
+
+- LMD stores image url’s for 30 days and wiki for 7, it may store invalid links from the old setup so we’ll clear all LMD caches:
+
+```
+docker exec -it musicbrainz-docker-db-1 \```
+```
+psql -U abc -d lm_cache_db -c "TRUNCATE artist, tadb, fanart, album, spotify, wikipedia;"
+```
+
+- Restart the container stack
+
+```
+docker compose up -d
+```
