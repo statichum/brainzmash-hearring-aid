@@ -389,7 +389,7 @@ Enjoy your fully functional Lidarr instance again! 🎶🚀
 ## 2. Stop docker container
 
 ```
-Docker compose down
+docker compose down
 ```
 
 ## 3. Change image name for lmd-settings.yml
