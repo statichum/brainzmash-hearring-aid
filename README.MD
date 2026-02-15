@@ -398,24 +398,33 @@ docker compose down
 nano ./local/compose/lmd-settings.yml
 ```
 
-- Change image name to statichum/brainzmash-hearring-aid:latest
+- Change image name to 
+```
+statichum/brainzmash-hearring-aid:latest
+```
 
-
-## 4. LMD stores image url’s for 30 days and wiki for 7, it may store invalid links from the old setup so we’ll clear all LMD caches:
+# 4. Restart the container stack
 
 ```
-docker exec -it musicbrainz-docker-db-1 \
+docker compose up -d
+```
+
+## 5. LMD stores image url’s for 30 days and wiki for 7, it may store invalid links from the old setup so we’ll clear all LMD caches:
+
+-Enter the db contianer and clear LMD cache
+This only clears LMD cache tables — it does NOT affect your MusicBrainz database.
+```
+docker exec -it musicbrainz-docker-db-1 sh
 ```
 
 ```
 psql -U abc -d lm_cache_db -c "TRUNCATE artist, tadb, fanart, album, spotify, wikipedia;"
 ```
 
-# 5. Restart the container stack
-
 ```
-docker compose up -d
+exit
 ```
 
+Done! Test it.
 
 ---
