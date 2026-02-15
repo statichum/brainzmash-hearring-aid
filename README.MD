@@ -381,34 +381,41 @@ Enjoy your fully functional Lidarr instance again! 🎶🚀
 
 >If you're updating from blampe's blampe/lidarr.metadata:70a9707 image, follow the instructions below
 
-- cd to your musicbrainz docker folder, wherever that is for you:
+## 1. cd to your musicbrainz docker folder, wherever that is for you:
 
 ```cd /opt/docker/musicbrainz-docker```
 
 
-- Stop docker container
+## 2. Stop docker container
 
 ```
 Docker compose down
 ```
 
-- Change image name for lmd-settings.yml
+## 3. Change image name for lmd-settings.yml
 
 ```
 nano ./local/compose/lmd-settings.yml
-Change image to xxxxxxxxxxxxxxxx
 ```
 
-- LMD stores image url’s for 30 days and wiki for 7, it may store invalid links from the old setup so we’ll clear all LMD caches:
+- Change image name to statichum/brainzmash-hearring-aid:latest
+
+
+## 4. LMD stores image url’s for 30 days and wiki for 7, it may store invalid links from the old setup so we’ll clear all LMD caches:
 
 ```
-docker exec -it musicbrainz-docker-db-1 \```
+docker exec -it musicbrainz-docker-db-1 \
+```
+
 ```
 psql -U abc -d lm_cache_db -c "TRUNCATE artist, tadb, fanart, album, spotify, wikipedia;"
 ```
 
-- Restart the container stack
+# 5. Restart the container stack
 
 ```
 docker compose up -d
 ```
+
+
+---
