@@ -180,6 +180,7 @@ psql postgres://abc:abc@db/musicbrainz_db -f LidarrAPI.Metadata/lidarrmetadata/s
 ```
 exit
 ```
+```
 docker compose down
 ```
 ```
