@@ -52,13 +52,12 @@ cd musicbrainz-docker
 ### 2.1 Download and run BrainzMash Bootstrap script
 
 - Download the script
-```curl -fsSL -o brainzmash-bootstrap.sh \
-https://raw.githubusercontent.com/statichum/brainzmash-bootstrap/v1.0.0/brainzmash-bootstrap.sh
+```
+curl -fsSL -o brainzmash-bootstrap.sh https://raw.githubusercontent.com/statichum/brainzmash-bootstrap/v1.0.0/brainzmash-bootstrap.sh
 ```
 - Run the script
 ```
-chmod +x brainzmash-bootstrap.sh
-./brainzmash-bootstrap.sh
+bash brainzmash-bootstrap.sh
 ```
 - Remove the script (only needed once)
 ```
