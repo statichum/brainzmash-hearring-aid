@@ -168,14 +168,22 @@ tail -f /musicbrainz-server/mirror.log
 
 ## 7. Initialize Lidarr Metadata Server Database
 
-```bash
+```
 docker exec -it musicbrainz-docker-musicbrainz-1 /bin/bash
+```
+```
 cd /tmp
 git clone https://github.com/Lidarr/LidarrAPI.Metadata.git
 psql postgres://abc:abc@db/musicbrainz_db -c 'CREATE DATABASE lm_cache_db;'
 psql postgres://abc:abc@db/musicbrainz_db -f LidarrAPI.Metadata/lidarrmetadata/sql/CreateIndices.sql
+```
+```
 exit
-docker compose restart
+```
+docker compose down
+```
+```
+docker compose up -d
 ```
 
 ---
@@ -183,7 +191,7 @@ docker compose restart
 ## 8. Using the Lidarr Metadata Server
 
 - Your Lidarr metadata server is available at: `http://host-ip:5001`
-
+- Your NGNIX proxy is available at: `http://host-ip:5002`
 ---
 
 ## 9. Ensure you're running a branch of Lidarr that's plugins-capable
