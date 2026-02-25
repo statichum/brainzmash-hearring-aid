@@ -8,7 +8,20 @@ This guide will help you deploy a local MusicBrainz mirror, and integrate it wit
 
 You no longer need the plugins branch of lidarr in order to install Tubifarry and set a custom metadata server, currently plugins are avaiaible in lscr.io/linuxserver/lidarr:nightly
 
+
 In setting this up, please consider becoming a part of the BrainzMash community loadbalanced Lidarr API Metadata server pool (shit that's a mouthful huh?) https://www.reddit.com/r/Lidarr/comments/1qkb15s/brainzmash_lidarr_community_metadata_network/
+- This verison of Hearring Aid contains a NGINX Proxy for security in sharing your Lidarr metadata server
+
+- The BrainzMash server pool is a load balanced community group of Lidarr Metadata servers just like the one you just put together. We pool our resources to provide this working met>
+
+- Your server stays private, you share the address with me privately, I add it to the pool, that's it. You'll only recieve traffic from my frontdoor server, not direct from end use>
+- Load balancing is a simple round-robbin, if needed I can add weighting to increase or reduce load on your server as needed
+- Opt in or out at any time of course
+- The froontdoor server caches responses to significantly reduce load on backend servers like yours
+- It forms a quorum from multiple mirrors and rejects any server that doesn’t match the majority data fingerprint to ensure we're serving quality data
+- Replication status of each server is checked every 6 hours to make sure it's within 24h, if outside, your server will be rejected until next check. I run replication every 3h on >
+- A janky dashboard for server stats is here: https://dash.brainzmash.cc/
+
 
 
 > **Note:**  
@@ -51,6 +64,8 @@ cd musicbrainz-docker
 
 ### 2.1 Download and run BrainzMash Bootstrap script
 
+## This creates and registers the add-on compose files we require.
+
 - Download the script
 ```
 curl -fsSL -o brainzmash-bootstrap.sh https://raw.githubusercontent.com/statichum/brainzmash-bootstrap/main/brainzmash-bootstrap.sh
@@ -78,7 +93,7 @@ nano local/compose/lmd-settings.yml
 
 ### 2.3 Share API Key with Brainzmash operator
 
-- 👋🏼 https://discord.gg/MSTteNvANt
+- (privately) 👋🏼 https://discord.gg/MSTteNvANt
 
 ---
 
@@ -266,15 +281,8 @@ docker compose down -v && sleep 60 && docker compose up -d
 
 ## 11. Become Part Of the BrainzMash Server Pool
 
--The BrainzMash server pool is a load balanced community group of Lidarr Metadata servers just like the one you just put together. We pool our resources to provide this working metadata for Lidarr users frustrated with the official metadata and its 'quirks'.
-
-- Your server stays private, you share the address with me privately, I add it to the pool, that's it. You'll only recieve traffic from my frontdoor server, not direct from end users.
-- Load balancing is a simple round-robbin, if needed I can add weighting to increase or reduce load on your server as needed
-- Opt in or out at any time of course
-- The froontdoor server caches responses to significantly reduce load on backend servers like yours
-- It forms a quorum from multiple mirrors and rejects any server that doesn’t match the majority data fingerprint to ensure we're serving quality data
-- Replication status of each server is checked every 6 hours to make sure it's within 24h, if outside, your server will be rejected until next check. I run replication every 3h on both of my metadata servers, if you can do the same, that'd be ideal.
-- A janky dashboard for server stats is here: https://dash.brainzmash.cc/
+- Share your server, by far the easiest way is Cloudflare - just set up a tunnel to the NGINX proxy at port 5002
+- Privately share the URL for your server and the API key from step 2.3 wiht the Brainzmash operator  https://discord.gg/MSTteNvANt
 
 ---
 
