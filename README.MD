@@ -18,34 +18,22 @@ In setting this up, please consider becoming a part of the BrainzMash community 
 
 ## Prerequisites
 
-- Debian 12.11 server (root access)
 - At least 8GB RAM, a moderately capable CPU, and 100GB of free disk space
+- Best to run the database on a SSD volume rather than spinning disks
 - Basic familiarity with Docker and command line
 - Internet connection
+- Docker Compose
+
+## Notes before you start
+
+- Adjust IP addresses and volume paths to match your environment.
+- Initial DB creation, indexing, and replication can take several hours; be patient!
+- Replace all placeholder keys (Spotify, Fanart.tv, Last.fm, etc.) with your own API keys.
+
 
 ---
 
-## 1. System Setup: Install Docker, Git, Screen, and Updates
-
-```bash
-# Add Docker's official GPG key and repository
-apt-get update
-apt-get install -y ca-certificates curl
-install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
-chmod a+r /etc/apt/keyrings/docker.asc
-
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-apt-get update
-
-# Install Docker, Docker Compose plugin, Git, Screen, and upgrade system
-apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin git screen
-apt-get upgrade -y && apt-get dist-upgrade -y
-```
-
----
-
-## 2. Generate MusicBrainz Replication Token
+## 1. Generate MusicBrainz Replication Token
 
 1. Visit https://metabrainz.org/supporters/account-type and select your account type (usually "Non-commercial").
 2. Go to https://metabrainz.org/profile and create an access token.
@@ -53,150 +41,49 @@ apt-get upgrade -y && apt-get dist-upgrade -y
 
 ---
 
-## 3. Setup MusicBrainz Docker Environment
+## 2. Setup MusicBrainz Docker Environment
 
 ```bash
 mkdir -p /opt/docker && cd /opt/docker
 git clone https://github.com/metabrainz/musicbrainz-docker.git
 cd musicbrainz-docker
-mkdir -p local/compose
 ```
 
-### 3.1 Override Postgres User and Password
+### 2.1 Download and run BrainzMash Bootstrap script
 
-Create `local/compose/postgres-settings.yml`:
-
-```yaml
-services:
-  musicbrainz:
-    environment:
-      POSTGRES_USER: "abc"
-      POSTGRES_PASSWORD: "abc"
-      MUSICBRAINZ_WEB_SERVER_HOST: "HOST_IP"  # Replace with your host IP
-  db:
-    environment:
-      POSTGRES_USER: "abc"
-      POSTGRES_PASSWORD: "abc"
-  indexer:
-    environment:
-      POSTGRES_USER: "abc"
-      POSTGRES_PASSWORD: "abc"
+- Download the script
+```curl -fsSL -o brainzmash-bootstrap.sh \
+https://raw.githubusercontent.com/statichum/brainzmash-bootstrap/v1.0.0/brainzmash-bootstrap.sh
+```
+- Run the script
+```
+chmod +x brainzmash-bootstrap.sh
+./brainzmash-bootstrap.sh
+```
+- Remove the script (only needed once)
+```
+rm brainzmash-bootstrap.sh
 ```
 
-### 3.2 Customize Memory Settings
+### 2.2 Configure Lidarr Metadata Server
 
-Create `local/compose/memory-settings.yml`:
+edit `local/compose/lmd-settings.yml` to add your keys:
 
-```yaml
-services:
-  db:
-    command: postgres -c "shared_buffers=2GB" -c "shared_preload_libraries=pg_amqp.so"
-  search:
-    environment:
-      - SOLR_HEAP=2g
+```
+nano local/compose/lmd-settings.yml
 ```
 
-> These settings are a recommendation for a setup that will service 5 or fewer Lidarr instances; adjust memory allocations according to your server's capacity, and use case.
-
-### 3.3 Customize Volume Paths
-
-Create `local/compose/volume-settings.yml`:
-
-```yaml
-volumes:
-  mqdata:
-    driver_opts:
-      type: none
-      device: /opt/docker/musicbrainz-docker/volumes/mqdata
-      o: bind
-  pgdata:
-    driver_opts:
-      type: none
-      device: /opt/docker/musicbrainz-docker/volumes/pgdata
-      o: bind
-  solrdata:
-    driver_opts:
-      type: none
-      device: /opt/docker/musicbrainz-docker/volumes/solrdata
-      o: bind
-  dbdump:
-    driver_opts:
-      type: none
-      device: /opt/docker/musicbrainz-docker/volumes/dbdump
-      o: bind
-  solrdump:
-    driver_opts:
-      type: none
-      device: /opt/docker/musicbrainz-docker/volumes/solrdump
-      o: bind
-```
-
-### 3.4 Configure Lidarr Metadata Server
-
-Create `local/compose/lmd-settings.yml`:
-
-```yaml
-volumes:
-  lmdconfig:
-    driver_opts:
-      type: none
-      device: /opt/docker/musicbrainz-docker/volumes/lmdconfig
-      o: bind
-    driver: local
-
-services:
-  lmd:
-    image: statichum/brainzmash-hearring-aid:latest
-    ports:
-      - 5001:5001
-    environment:
-      DEBUG: false
-      PRODUCTION: false
-      USE_CACHE: true
-      ENABLE_STATS: false
-      ROOT_PATH: ""
-      IMAGE_CACHE_HOST: "theaudiodb.com"
-      EXTERNAL_TIMEOUT: 1000
-      INVALIDATE_APIKEY: ""
-      REDIS_HOST: "redis"
-      REDIS_PORT: 6379
-      FANART_KEY: "xxx"        # Replace with your own key
-      PROVIDERS__FANARTTVPROVIDER__0__0: "xxx"  # Replace with your own key
-      SPOTIFY_ID: "xxx"            # Replace with your own key
-      SPOTIFY_SECRET: "xxx"        # Replace with your own key
-      SPOTIFY_REDIRECT_URL: "http://xxx.xxx.xxx.xxx:5001"   # set your host_ip
-      PROVIDERS__SPOTIFYPROVIDER__1__CLIENT_ID: "xxx"    # Replace with your own key
-      PROVIDERS__SPOTIFYPROVIDER__1__CLIENT_SECRET: "xxx" # Replace with your own key
-      PROVIDERS__SPOTIFYAUTHPROVIDER__1__CLIENT_ID: "xxx" # Replace with your own key
-      PROVIDERS__SPOTIFYAUTHPROVIDER__1__CLIENT_SECRET: "xxx" # Replace with your own key
-      PROVIDERS__SPOTIFYAUTHPROVIDER__1__REDIRECT_URI: "http://xxx.xxx.xxx.xxx:5001"   # set your host_ip
-      TADB_KEY: "2"    # Default, may need your own key for full functionality
-      PROVIDERS__THEAUDIODBPROVIDER__0__0: "2"    # Default, may need your own key for full functionality
-      LASTFM_KEY: "xxx"   # Replace with your own key
-      LASTFM_SECRET: "xxx" # Replace with your own key
-      PROVIDERS__SOLRSEARCHPROVIDER__1__SEARCH_SERVER: "http://search:8983/solr"
-    restart: unless-stopped
-    volumes:
-      - lmdconfig:/config
-    depends_on:
-      - db
-      - mq
-      - search
-      - redis
-```
+- Replace all placeholder keys (Spotify, Fanart.tv, Last.fm, etc.) with your own API keys.
 
 ---
 
-## 4. Create Volume Directories and Add Compose Overrides
+### 2.3 Share API Key with Brainzmash operator
 
-```bash
-mkdir -p volumes/{mqdata,pgdata,solrdata,dbdump,solrdump,lmdconfig}
-admin/configure add local/compose/postgres-settings.yml local/compose/memory-settings.yml local/compose/volume-settings.yml local/compose/lmd-settings.yml
-```
+- 👋🏼 https://discord.gg/MSTteNvANt
 
 ---
 
-## 5. Build and Initialize MusicBrainz Database
+## 4. Build and Initialize MusicBrainz Database
 
 ```bash
 docker compose build
@@ -207,7 +94,7 @@ docker compose exec indexer python -m sir reindex --entity-type artist --entity-
 
 ---
 
-## 6. Schedule Weekly Index Updates
+## 5. Schedule Weekly Index Updates
 
 Edit `/etc/crontab` and add:
 
@@ -217,7 +104,7 @@ Edit `/etc/crontab` and add:
 
 ---
 
-## 7. Configure Replication Token and Start Replication
+## 6. Configure Replication Token and Start Replication
 
 ```bash
 docker compose down
@@ -233,7 +120,26 @@ docker compose up -d
 
 ---
 
-## 8. Initialize Lidarr Metadata Server Database
+## 6.1 (Optional Recommendation) Customise Replication Frequency and Set Up Logging
+
+- Edit replication cron file
+```default/replication.cron
+```
+
+- Recommended: Run 3hrly replications and set logs
+```
+0 */3 * * * cd /musicbrainz-server && /usr/local/bin/replication.sh >> /musicbrainz-server/mirror.log 2>&1
+```
+
+- Later, if need-be you can check the replicatin logs for troubleshooting by running:
+```
+docker exec -it musicbrainz-docker-musicbrainz-1 \
+tail -f /musicbrainz-server/mirror.log
+```
+-Restart the container after these changes
+---
+
+## 7. Initialize Lidarr Metadata Server Database
 
 ```bash
 docker exec -it musicbrainz-docker-musicbrainz-1 /bin/bash
@@ -247,13 +153,13 @@ docker compose restart
 
 ---
 
-## 9. Using the Lidarr Metadata Server
+## 8. Using the Lidarr Metadata Server
 
 - Your Lidarr metadata server is available at: `http://host-ip:5001`
 
 ---
 
-## 10. Ensure you're running a branch of Lidarr that's plugins-capable
+## 9. Ensure you're running a branch of Lidarr that's plugins-capable
 
 - At present that's the nightly image
 
@@ -263,28 +169,24 @@ lscr.io/linuxserver/lidarr:nightly
 
 ---
 
-### 10.1 Configure Tubifarry Plugin in Lidarr
+## 9.1 Configure Tubifarry Plugin in Lidarr
 
 1. Open your browser to `http://host_ip:8686` and complete initial setup.
 2. Navigate to **System > Plugins**.
-3. Install **Tubifarry prod plugin** by entering the URL:  
+3. Install **Tubifarry plugin** by entering the URL:  
    `https://github.com/TypNull/Tubifarry`  
    and click **Install**.
-4. After Lidarr restarts, go back to **System > Plugins**.
-5. Install the **Tubifarry develop branch** plugin by entering:  
-   `https://github.com/TypNull/Tubifarry/tree/develop`  
-   and click **Install**.
-6. After Lidarr restarts, log back into Lidarr and go to **Settings > Metadata**.
-7. Under **Metadata Consumers**, select **Lidarr Custom**.
-8. Check both boxes and enter your metadata server URL (e.g., `http://host_ip:5001`) in the **Metadata Source** field.
-9. Save changes and restart Lidarr again:  
+4. Restart Lidarr and after Lidarr restarts, log back into Lidarr and go to **Settings > Metadata**.
+5. Under **Metadata Consumers**, select **Lidarr Custom**.
+6. Check both boxes and enter your metadata server URL (e.g., `http://host_ip:5001`) in the **Metadata Source** field.
+7. Save changes and restart Lidarr again:  
     ```bash
     docker compose restart
     ```
 
 ---
 
-## 11. Verify and Troubleshoot
+## 10. Verify and Troubleshoot
 
 Follow these steps to test the setup and resolve common issues.
 
@@ -363,18 +265,21 @@ docker compose down -v && sleep 60 && docker compose up -d
 
 ---
 
-## Final Notes
+## 11. Become Part Of the BrainzMash Server Pool
 
-- Replace all placeholder keys (Spotify, Fanart.tv, Last.fm, etc.) with your own API keys.
-- Adjust IP addresses and volume paths to match your environment.
-- Initial DB creation, indexing, and replication can take several hours; be patient!
-- Feel free to open an issue or comment if you find bugs or need help.
+-The BrainzMash server pool is a load balanced community group of Lidarr Metadata servers just like the one you just put together. We pool our resources to provide this working metadata for Lidarr users frustrated with the official metadata and its 'quirks'.
+
+- Your server stays private, you share the address with me privately, I add it to the pool, that's it. You'll only recieve traffic from my frontdoor server, not direct from end users.
+- Load balancing is a simple round-robbin, if needed I can add weighting to increase or reduce load on your server as needed
+- Opt in or out at any time of course
+- The froontdoor server caches responses to significantly reduce load on backend servers like yours
+- It forms a quorum from multiple mirrors and rejects any server that doesn’t match the majority data fingerprint to ensure we're serving quality data
+- Replication status of each server is checked every 6 hours to make sure it's within 24h, if outside, your server will be rejected until next check. I run replication every 3h on both of my metadata servers, if you can do the same, that'd be ideal.
+- A janky dashboard for server stats is here: https://dash.brainzmash.cc/
 
 ---
 
-Enjoy your fully functional Lidarr instance again! 🎶🚀
 
----
 
 
 # For those updating to this image from blampe's original image
