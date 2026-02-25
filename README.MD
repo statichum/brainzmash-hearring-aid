@@ -79,7 +79,19 @@ bash brainzmash-bootstrap.sh
 rm brainzmash-bootstrap.sh
 ```
 
-### 2.2 Configure Lidarr Metadata Server
+### 2.2 Edit compose settings if deviating from defaults
+
+- Volumes
+```
+nano local/compose/volume-settings.yml 
+```
+
+- Memory
+```
+nano local/compose/memory-settings.yml 
+```
+
+### 2.3 Configure Lidarr Metadata Server
 
 edit `local/compose/lmd-settings.yml` to add your keys:
 
@@ -91,7 +103,7 @@ nano local/compose/lmd-settings.yml
 
 ---
 
-### 2.3 Share API Key with Brainzmash operator
+### 2.4 Share API Key with Brainzmash operator
 
 - (privately) 👋🏼 https://discord.gg/MSTteNvANt
 
@@ -137,7 +149,8 @@ docker compose up -d
 ## 6.1 (Optional Recommendation) Customise Replication Frequency and Set Up Logging
 
 - Edit replication cron file
-```default/replication.cron
+```
+nano default/replication.cron
 ```
 
 - Recommended: Run 3hrly replications and set logs
