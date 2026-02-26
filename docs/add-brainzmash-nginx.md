@@ -5,7 +5,7 @@
 - From within your Musicbrainz docker folder
 
 ```
-nano /local/compose/brainzmash-nginx.yml
+nano ./local/compose/brainzmash-nginx.yml
 ```
 
 - paste
@@ -37,7 +37,7 @@ mkdir -p ./local/compose/brainzmash
 - Add config
 
 ```
-nano /local/compose/brainzmash/nginx.conf
+nano ./local/compose/brainzmash/nginx.conf
 ```
 
 - Paste
@@ -86,7 +86,7 @@ http {
 
 ## 2.1 Generate and insert API key
 
-- Generate sand insert key
+- Generate and insert key
 
 ```
 KEY=$(openssl rand -hex 32)
