@@ -122,7 +122,12 @@ docker compose exec indexer python -m sir reindex --entity-type artist --entity-
 
 ## 5. Schedule Weekly Index Updates
 
-Edit `/etc/crontab` and add:
+- Edit crontab:
+
+```
+sudo crontab -e
+```
+- Add:
 
 ```
 0 1 * * 7 root cd /opt/docker/musicbrainz-docker && /usr/bin/docker compose exec -T indexer python -m sir reindex --entity-type artist --entity-type release
