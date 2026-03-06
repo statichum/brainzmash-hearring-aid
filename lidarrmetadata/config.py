@@ -444,6 +444,13 @@ class DefaultConfig(six.with_metaclass(ConfigMeta, ConfigBase)):
     # Port to use
     HTTP_PORT = 5001
 
+    # Quart-Compress settings
+    COMPRESS_LEVEL = 2
+    COMPRESS_MIN_SIZE = 1024
+    COMPRESS_MIMETYPES = [
+        'application/json'
+    ]
+
     # LastFM API connection details
     LASTFM_KEY = ''
     LASTFM_SECRET = ''
