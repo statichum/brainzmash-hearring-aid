@@ -5,6 +5,7 @@ import asyncio
 
 from quart import Quart, abort, make_response, request, jsonify, redirect, url_for
 from quart.exceptions import HTTPStatusException
+from quart_compress import Compress
 
 import redis
 import sentry_sdk
@@ -33,6 +34,8 @@ logger.info('Have app logger')
 
 app = Quart(__name__)
 app.config.from_object(config.get_config())
+
+Compress(app)
 
 if app.config['SENTRY_DSN']:
     if app.config['SENTRY_REDIS_HOST'] is not None:
