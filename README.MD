@@ -31,9 +31,11 @@ In setting this up, please consider becoming a part of the BrainzMash community 
 
 ## Prerequisites
 
-- At least 8GB RAM, a moderately capable CPU, and 100GB of free disk space
-- Best to run the database on a SSD volume rather than spinning disks
-- Basic familiarity with Docker and command line
+- Debian based OS
+- At least 8GB RAM
+- A moderately capable CPU
+- 100GB of free space on NVME/SSD (dont use spinning disks)
+- Familiarity with Docker and command line
 - Internet connection
 - Docker Compose
 
