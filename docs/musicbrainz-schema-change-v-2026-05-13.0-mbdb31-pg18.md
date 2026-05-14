@@ -18,7 +18,7 @@ docker compose up -d --force-recreate lmd
 ```
 nano local/compose/lmd-settings.yml 
 ```
-- Remove the md & redis lines from the depends_on section. (Leave valkey out for now, easier to leave it out and add it later so the update instructions work without hassle). Should look like:
+- Remove the mq & redis lines from the depends_on section. (Leave valkey out for now, easier to leave it out and add it later so the update instructions work without hassle). Should look like:
 
 ```
     depends_on:
