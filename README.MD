@@ -181,8 +181,8 @@ docker exec -it musicbrainz-docker-musicbrainz-1 /bin/bash
 ```
 cd /tmp
 git clone https://github.com/Lidarr/LidarrAPI.Metadata.git
-psql postgres://abc:abc@db/musicbrainz_db -c 'CREATE DATABASE lm_cache_db;'
-psql postgres://abc:abc@db/musicbrainz_db -f LidarrAPI.Metadata/lidarrmetadata/sql/CreateIndices.sql
+psql postgres://musicbrainz:musicbrainz@db/musicbrainz_db -c 'CREATE DATABASE lm_cache_db;'
+psql postgres://musicbrainz:musicbrainz/musicbrainz_db -f LidarrAPI.Metadata/lidarrmetadata/sql/CreateIndices.sql
 ```
 ```
 exit
@@ -317,55 +317,3 @@ docker compose down -v && sleep 60 && docker compose up -d
 
 
 
-
-# For those updating to this image from blampe's original image
-
->If you're updating from blampe's blampe/lidarr.metadata:70a9707 image, follow the instructions below
-
-## 1. cd to your musicbrainz docker folder, wherever that is for you:
-
-```cd /opt/docker/musicbrainz-docker```
-
-
-## 2. Stop docker container
-
-```
-docker compose down
-```
-
-## 3. Change image name for lmd-settings.yml
-
-```
-nano ./local/compose/lmd-settings.yml
-```
-
-- Change image name to 
-```
-statichum/brainzmash-hearring-aid:latest
-```
-
-## 4. Restart the container stack
-
-```
-docker compose up -d
-```
-
-## 5. LMD stores image url’s for 30 days and wiki for 7, it may store invalid links from the old setup so we’ll clear all LMD caches:
-
-- Enter the db contianer and clear LMD cache
-> This only clears LMD cache tables — it does NOT affect your MusicBrainz database.
-```
-docker exec -it musicbrainz-docker-db-1 sh
-```
-
-```
-psql -U abc -d lm_cache_db -c "TRUNCATE artist, tadb, fanart, album, spotify, wikipedia;"
-```
-
-```
-exit
-```
-
-Done! Test it.
-
----

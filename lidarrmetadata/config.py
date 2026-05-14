@@ -469,8 +469,8 @@ class DefaultConfig(six.with_metaclass(ConfigMeta, ConfigBase)):
         'MUSICBRAINZDBPROVIDER': ([], {
             'DB_HOST': 'db',
             'DB_PORT': 5432,
-            'DB_USER': 'abc',
-            'DB_PASSWORD': 'abc'
+            'DB_USER': 'musicbrainz',
+            'DB_PASSWORD': 'musicbrainz'
         }),
         'SOLRSEARCHPROVIDER': ([], {'SEARCH_SERVER': 'http://solr:8983/solr'}),
         'FANARTTVPROVIDER': ([FANART_KEY], {}),

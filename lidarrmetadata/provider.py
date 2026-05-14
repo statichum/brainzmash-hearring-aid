@@ -1095,8 +1095,8 @@ class MusicbrainzDbProvider(Provider,
                  db_host='localhost',
                  db_port=5432,
                  db_name='musicbrainz_db',
-                 db_user='abc',
-                 db_password='abc'):
+                 db_user='musicbrainz',
+                 db_password='musicbrainz'):
         """
         Class initialization
 
