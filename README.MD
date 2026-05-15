@@ -139,14 +139,29 @@ sudo crontab -e
 
 ## 6. Configure Replication Token and Start Replication
 
-```bash
+```
 docker compose down
+```
+```
 admin/set-replication-token   # Enter your replication token when prompted
 admin/configure add replication-token
+```
+```
 docker compose up -d
-docker compose exec musicbrainz replication.sh   # Run initial replication; use screen to keep it running
+```
+- Run initial replicaiton, this is expected to take some time, use screen or tmux to keep it running:
+```
+docker compose exec musicbrainz replication.sh   # Run initial replication; use screen or tmux to keep it running
+```
+- If you would like to check and follow logs during this process, in another window
+```
+docker exec -it musicbrainz-docker-musicbrainz-1 \
+tail -f /musicbrainz-server/mirror.log
+```
+- Add cron & clean up. Wait for replication to finish before going on to next steps.
+```
 admin/configure add replication-cron
-docker compose down   # Wait for replication to finish before restarting
+docker compose down
 rm -rf volumes/dbdump/*   # Clean up, saves ~6GB
 docker compose up -d
 ```
@@ -171,6 +186,10 @@ docker exec -it musicbrainz-docker-musicbrainz-1 \
 tail -f /musicbrainz-server/mirror.log
 ```
 -Restart the container after these changes
+```
+docker compose down && docker compose up -d
+```
+
 ---
 
 ## 7. Initialize Lidarr Metadata Server Database
@@ -180,9 +199,9 @@ docker exec -it musicbrainz-docker-musicbrainz-1 /bin/bash
 ```
 ```
 cd /tmp
-git clone https://github.com/Lidarr/LidarrAPI.Metadata.git
+git clone https://github.com/statichum/brainzmash-hearring-aid.git
 psql postgres://musicbrainz:musicbrainz@db/musicbrainz_db -c 'CREATE DATABASE lm_cache_db;'
-psql postgres://musicbrainz:musicbrainz/musicbrainz_db -f LidarrAPI.Metadata/lidarrmetadata/sql/CreateIndices.sql
+psql postgres://musicbrainz:musicbrainz@db/musicbrainz_db -f brainzmash-hearring-aid/lidarrmetadata/sql/CreateIndices.sql
 ```
 ```
 exit
