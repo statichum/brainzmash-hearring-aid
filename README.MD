@@ -153,12 +153,12 @@ docker compose up -d
 ```
 docker compose exec musicbrainz replication.sh   # Run initial replication; use screen or tmux to keep it running
 ```
-- If you would like to check and follow logs during this process, in another window
+- If you would like to check and follow logs during this process, in another window:
 ```
 docker exec -it musicbrainz-docker-musicbrainz-1 \
 tail -f /musicbrainz-server/mirror.log
 ```
-- Add cron & clean up. Wait for replication to finish before going on to next steps.
+- Add cron & clean up
 ```
 admin/configure add replication-cron
 docker compose down
