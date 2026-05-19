@@ -175,9 +175,9 @@ docker compose up -d
 nano default/replication.cron
 ```
 
-- Recommended: Run 3hrly replications and set logs
+- Recommended: Run hourly replications at a few minutes after the hour so that MusicBrainz' replicaiton packet is ready for us, and set logs
 ```
-0 */3 * * * cd /musicbrainz-server && /usr/local/bin/replication.sh >> /musicbrainz-server/mirror.log 2>&1
+5 * * * * cd /musicbrainz-server && /usr/local/bin/replication.sh >> /musicbrainz-server/mirror.log 2>&1
 ```
 
 - Later, if need-be you can check the replicatin logs for troubleshooting by running:
