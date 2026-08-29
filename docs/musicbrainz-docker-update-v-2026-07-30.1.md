@@ -4,11 +4,11 @@ Run these commands on each MusicBrainz backend server.
 
 ## 1. Open the MusicBrainz Docker directory
 
+e.g.
 ```bash
 cd /docker/musicbrainz-docker
 ```
 
-Use the server's actual MusicBrainz Docker path if it differs.
 
 ## 2. Discard the old tracked modifications
 
