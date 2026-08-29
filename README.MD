@@ -3,28 +3,23 @@
 Original project by [blampe](https://github.com/blampe/hearring-aid)
 This fork contains fixes for image and wiki sourcing.
 
-The BrainzMash participant stack supports both Aurral/Lidarr metadata requests
-and the read-only MusicBrainz requests used by Dropped Needle in the BrainzMash
-community server pool.
+The BrainzMash community metadata pool supports LMD Metadata requests for both Lidarr and Aurral.
+It also provides the /ws/2 MusicBrainz endpoints (read only) for Droppedneedle metadata requests.
 
 
-This guide will help you deploy a local MusicBrainz mirror, and integrate it with Lidarr using the Tubifarry plugin. It walks through host and container setup, basic configuration, and validation steps to ensure the system is working properly.
+This guide will help you deploy a local MusicBrainz mirror with the LMD add-in and NGINX proxy for securely to allowing connection to the Brainzmash server pool.
 
 You no longer need the plugins branch of lidarr in order to install Tubifarry and set a custom metadata server, currently plugins are avaiaible in lscr.io/linuxserver/lidarr:nightly
 
+- The BrainzMash server pool is a load balanced community group of Lidarr Metadata servers. We pool our resources to provide this working metadata to Lidarr, Aurral and Droppedneedle.
 
-In setting this up, please consider becoming a part of the BrainzMash community loadbalanced Lidarr API Metadata server pool (shit that's a mouthful huh?) https://www.reddit.com/r/Lidarr/comments/1qkb15s/brainzmash_lidarr_community_metadata_network/
-- This verison of Hearring Aid contains a NGINX Proxy for security in sharing your Lidarr metadata server
-
-- The BrainzMash server pool is a load balanced community group of Lidarr Metadata servers just like the one you just put together. We pool our resources to provide this working met>
-
-- Your server stays private, you share the address with me privately, I add it to the pool, that's it. You'll only recieve traffic from my frontdoor server, not direct from end use>
+- Your server stays private, you share the address and generated API key with me privately, I add it to the pool, that's it. You'll only recieve traffic from the Brainzmash frontdoor server, not direct from end users.
 - Load balancing is a simple round-robbin, if needed I can add weighting to increase or reduce load on your server as needed
 - Opt in or out at any time of course
-- The froontdoor server caches responses to significantly reduce load on backend servers like yours
-- It forms a quorum from multiple mirrors and rejects any server that doesn’t match the majority data fingerprint to ensure we're serving quality data
-- Replication status of each server is checked every 6 hours to make sure it's within 24h, if outside, your server will be rejected until next check. I run replication every 3h on >
-- A janky dashboard for server stats is here: https://dash.brainzmash.cc/
+- The froontdoor server caches responses to significantly reduce load on backend servers like yours. Usage. is high enough that cache is always warm and backend server hits are fairly minimal for the overall traffic volume.
+- It forms a quorum from multiple mirrors and rejects any server that doesn’t match the majority data fingerprint to ensure we're serving quality data.
+- Replication status of each server is checked every 6 hours to make sure it's within 24h, if outside, any lagging server will be rejected until next check.
+- Dashboard for server stats is here: https://dash.brainzmash.cc/
 
 
 
