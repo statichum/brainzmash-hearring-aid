@@ -3,6 +3,10 @@
 Original project by [blampe](https://github.com/blampe/hearring-aid)
 This fork contains fixes for image and wiki sourcing.
 
+The BrainzMash participant stack supports both Aurral/Lidarr metadata requests
+and the read-only MusicBrainz requests used by Dropped Needle in the BrainzMash
+community server pool.
+
 
 This guide will help you deploy a local MusicBrainz mirror, and integrate it with Lidarr using the Tubifarry plugin. It walks through host and container setup, basic configuration, and validation steps to ensure the system is working properly.
 
@@ -43,6 +47,8 @@ In setting this up, please consider becoming a part of the BrainzMash community 
 
 - Adjust IP addresses and volume paths to match your environment.
 - Initial DB creation, indexing, and replication can take several hours; be patient!
+- The recording search index is large and substantially increases indexing load
+  and disk usage; make sure the host has ample free SSD/NVMe space before starting.
 - Replace all placeholder keys (Spotify, Fanart.tv, Last.fm, etc.) with your own API keys.
 
 
@@ -117,7 +123,7 @@ nano local/compose/lmd-settings.yml
 docker compose build
 docker compose run --rm musicbrainz createdb.sh -fetch   # This may take an hour or more
 docker compose up -d
-docker compose exec indexer python -m sir reindex --entity-type artist --entity-type release  # Indexing may take a couple hours
+docker compose exec indexer python -m sir reindex --entity-type artist --entity-type release-group --entity-type release --entity-type recording  # Indexing may take several hours
 ```
 
 ---
@@ -132,7 +138,7 @@ sudo crontab -e
 - Add:
 
 ```
-0 1 * * 7 root cd /opt/docker/musicbrainz-docker && /usr/bin/docker compose exec -T indexer python -m sir reindex --entity-type artist --entity-type release
+0 1 * * 7 root cd /opt/docker/musicbrainz-docker && /usr/bin/docker compose exec -T indexer python -m sir reindex --entity-type artist --entity-type release-group --entity-type release --entity-type recording
 ```
 
 ---
@@ -333,6 +339,5 @@ docker compose down -v && sleep 60 && docker compose up -d
 - Privately share the URL for your server and the API key from step 2.3 wiht the Brainzmash operator  https://discord.gg/MSTteNvANt
 
 ---
-
 
 

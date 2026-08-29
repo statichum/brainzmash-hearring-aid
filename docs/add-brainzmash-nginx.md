@@ -21,6 +21,7 @@ services:
       - ./local/compose/brainzmash/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - lmd
+      - musicbrainz
     restart: unless-stopped
 
 ``` 
@@ -50,32 +51,51 @@ events {
 }
 
 http {
-
-    # Optional small rate limit protection
-    limit_req_zone $binary_remote_addr zone=brainzmash:10m rate=10r/s;
-
     server {
         listen 80;
 
         # Inserted by setup script
         set $expected_key "__BRAINZMASH_KEY__";
 
-        location / {
+        # Authenticate every request, including LMD and MusicBrainz.
+        if ($http_x_brainzmash_key != $expected_key) {
+            return 403;
+        }
 
-            # Require correct BrainzMash header
-            if ($http_x_brainzmash_key != $expected_key) {
-                return 403;
+        # Read-only MusicBrainz endpoints required by Dropped Needle.
+        location ~ ^/ws/2/(artist|release-group|release|recording|isrc|url)(?:/[^/]+)?/?$ {
+            limit_except GET {
+                deny all;
             }
 
-            # Light rate limiting
-            limit_req zone=brainzmash burst=20 nodelay;
+            proxy_pass http://musicbrainz:5000;
+            proxy_http_version 1.1;
 
-            proxy_pass http://lmd:5001;
             proxy_set_header Host $host;
+            proxy_set_header Connection "";
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
 
+            proxy_connect_timeout 5s;
+            proxy_read_timeout 30s;
+        }
+
+        # Reject every other MusicBrainz API endpoint.
+        location /ws/2/ {
+            return 404;
+        }
+
+        location = /ws/2 {
+            return 404;
+        }
+
+        # Existing LMD endpoint.
+        location / {
+            proxy_pass http://lmd:5001;
             proxy_http_version 1.1;
+
+            proxy_set_header Host $host;
             proxy_set_header Connection "";
         }
     }
