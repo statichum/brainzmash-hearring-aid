@@ -132,11 +132,14 @@ to return to the shell prompt before testing.
 
 ## 5. Test the new endpoints
 
-Load the existing BrainzMash key into the current shell:
+From within the `musicbrainz-docker` directory, load the existing BrainzMash
+key from the Nginx configuration:
 
 ```bash
-read -rsp "BrainzMash key: " BM_KEY
-echo
+BM_KEY=$(
+  sed -n 's/.*set $expected_key "\([^"]*\)";.*/\1/p' \
+    ./local/compose/brainzmash/nginx.conf
+)
 ```
 
 Test release-group search:
@@ -170,14 +173,6 @@ Each command should print:
 
 ```text
 true
-```
-
-If either request returns `403 Forbidden`, check that `BM_KEY` was assigned and
-that it exactly matches `set $expected_key` in the Nginx configuration:
-
-```bash
-printf '%s\n' "$BM_KEY"
-grep 'set $expected_key' ./local/compose/brainzmash/nginx.conf
 ```
 
 ## 6. Request the external check
