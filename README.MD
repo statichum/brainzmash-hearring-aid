@@ -113,6 +113,7 @@ nano local/compose/lmd-settings.yml
 ---
 
 ## 4. Build and Initialize MusicBrainz Database
+Note this step will take hours - perhaps many hours - Run it in tmux or screen so that you do not lose the session.
 
 ```bash
 docker compose build
