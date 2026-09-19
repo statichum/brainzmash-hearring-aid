@@ -121,6 +121,7 @@ async def get_artist_info_multi(mbids):
 
     artist_providers = provider.get_providers_implementing(provider.ArtistByIdMixin)
     artist_art_providers = provider.get_providers_implementing(provider.ArtistArtworkMixin)
+    linked_art_providers = provider.get_providers_implementing(provider.LinkedArtistArtworkMixin)
     
     if not artist_providers:
         # 500 error if we don't have an artist provider since it's essential
@@ -158,7 +159,22 @@ async def get_artist_info_multi(mbids):
                 artist['expiry'] = min(artist['expiry'], expiry)
     else:
         for artist in artists:
-            artist['images'] = []
+            artist['data']['images'] = []
+
+    # Deezer supplies a square artist picture, not a banner. Only fill a
+    # missing poster and only when MusicBrainz links this artist to Deezer.
+    if linked_art_providers:
+        missing_posters = [item for item in artists
+                           if not any(image['CoverType'] == 'Poster'
+                                      for image in item['data']['images'])
+                           and linked_art_providers[0].artist_id_from_links(item['data']['links'])]
+        results = await asyncio.gather(*[
+            linked_art_providers[0].get_linked_artist_images(item['data']['links'])
+            for item in missing_posters
+        ])
+        for item, (images, image_expiry) in zip(missing_posters, results):
+            item['data']['images'] = combine_images(item['data']['images'], images)
+            item['expiry'] = min(item['expiry'], image_expiry)
 
     # Get overview results
     results = await overviews_task

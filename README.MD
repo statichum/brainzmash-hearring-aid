@@ -3,6 +3,14 @@
 Original project by [blampe](https://github.com/blampe/hearring-aid)
 This fork contains fixes for image and wiki sourcing.
 
+Artist posters fall back to Deezer only when Fanart.tv and TheAudioDB do not
+provide a `Poster` and MusicBrainz has an explicit Deezer artist URL relationship.
+There is no artist-name matching and Deezer is not used for banners. Artist
+metadata and JPEGs are fetched through the separately cached
+`tadb.brainzmash.cc/deezer/` routes; deploy the updated TADB proxy before
+updating LMD. If Deezer is unavailable, the artist response still succeeds
+without that fallback image.
+
 The BrainzMash community metadata pool supports LMD Metadata requests for both Lidarr and Aurral.
 It also provides the /ws/2 MusicBrainz endpoints (read only) for Droppedneedle metadata requests.
 
@@ -335,5 +343,4 @@ docker compose down -v && sleep 60 && docker compose up -d
 - Privately share the URL for your server and the API key from step 2.3 wiht the Brainzmash operator  https://discord.gg/MSTteNvANt
 
 ---
-
 

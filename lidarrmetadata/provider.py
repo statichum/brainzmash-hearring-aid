@@ -328,6 +328,18 @@ class ArtistArtworkMixin(MixinBase):
         pass
 
 
+class LinkedArtistArtworkMixin(MixinBase):
+    """Artwork looked up using an external URL linked to the MB artist."""
+
+    @abc.abstractmethod
+    def artist_id_from_links(self, links):
+        pass
+
+    @abc.abstractmethod
+    async def get_linked_artist_images(self, links):
+        pass
+
+
 class AlbumArtworkMixin(MixinBase):
     """
     Gets art for album
@@ -549,6 +561,55 @@ class HttpProvider(Provider,
         except limit.RateLimitedError:
             logger.debug(f'{self._name} request rate limited')
             self._count_request('ratelimit')
+
+class DeezerProvider(HttpProvider, LinkedArtistArtworkMixin):
+    """Use only Deezer artist URLs explicitly linked in MusicBrainz."""
+
+    ARTIST_PATH = re.compile(r'/(?:[a-z]{2}/)?artist/([1-9][0-9]{0,11})/?$', re.I)
+    IMAGE_PATH = re.compile(
+        r'/images/artist/[0-9a-f]{32}/(?:500x500|1000x1000)-[A-Za-z0-9-]{1,80}\.jpg$',
+        re.I,
+    )
+
+    def __init__(self, base_url='https://tadb.brainzmash.cc/deezer', session=None, limiter=None):
+        super().__init__('deezer', session, limiter)
+        self._base_url = base_url.rstrip('/')
+
+    @classmethod
+    def artist_id_from_links(cls, links):
+        for link in links or []:
+            target = link.get('target', '') if isinstance(link, dict) else ''
+            parsed = urlparse(target)
+            if parsed.scheme not in ('http', 'https') or parsed.hostname not in ('deezer.com', 'www.deezer.com'):
+                continue
+            match = cls.ARTIST_PATH.fullmatch(parsed.path)
+            if match:
+                return match.group(1)
+        return None
+
+    def image_from_response(self, response):
+        if not isinstance(response, dict) or response.get('error'):
+            return []
+        for field in ('picture_big', 'picture_xl'):
+            parsed = urlparse(response.get(field) or '')
+            if parsed.scheme == 'https' and parsed.hostname == 'cdn-images.dzcdn.net' and self.IMAGE_PATH.fullmatch(parsed.path):
+                return [{'CoverType': 'Poster', 'Url': self._base_url + parsed.path}]
+        return []
+
+    async def get_linked_artist_images(self, links):
+        artist_id = self.artist_id_from_links(links)
+        now = utcnow()
+        if not artist_id:
+            return [], now + timedelta(seconds=CONFIG.CACHE_TTL['deezer'])
+        try:
+            data = await self.get_with_limit(f'{self._base_url}/artist/{artist_id}')
+            if data is None or (isinstance(data, dict) and data.get('error')):
+                return [], now + timedelta(seconds=CONFIG.CACHE_TTL['provider_error'])
+            return self.image_from_response(data), now + timedelta(seconds=CONFIG.CACHE_TTL['deezer'])
+        except Exception as error:
+            logger.warning('Deezer artist artwork unavailable: %s', error)
+            return [], now + timedelta(seconds=CONFIG.CACHE_TTL['provider_error'])
+
 
 class TheAudioDbProvider(HttpProvider,
                          ArtistOverviewMixin,
