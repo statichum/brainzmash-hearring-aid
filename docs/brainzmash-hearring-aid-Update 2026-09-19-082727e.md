@@ -2,7 +2,7 @@
 
 LMD has been updated, two main changes:
 - The original Album artwork selection for Musicbrainz' Cover Art Archive images was flawed and wasnt honouring the main image selected for the Release Group on Musicbrainz 
-- Artist posters now use Deezer as an alternitive when images are not avaiaible elsewhere which fills a lot of artist image gaps. The Artist must have their Deezer link in 'External Links' on the Musicbrainz artist page.
+- Artist posters now use Deezer as an alternative when images are not available elsewhere which fills a lot of artist image gaps. The Artist must have their Deezer link in 'External Links' on the Musicbrainz artist page.
 
 Run these commands on each MusicBrainz backend server.
 
