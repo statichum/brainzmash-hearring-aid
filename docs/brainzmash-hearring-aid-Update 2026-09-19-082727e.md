@@ -8,7 +8,7 @@ Run these commands on each MusicBrainz backend server.
 
 ## 1. Open the MusicBrainz Docker directory
 
-e.g.
+e.g. (wherever your container lives)
 ```
 cd /docker/musicbrainz-docker
 ```
@@ -32,7 +32,7 @@ curl -fsS \
 
 ## 3. Update
 
-```cd /docker/musicbrainz-docker
+```
 
 docker build \
   -t statichum/brainzmash-hearring-aid:latest \
@@ -46,7 +46,8 @@ docker compose up -d --pull never --no-deps --force-recreate lmd
 
 (Should now have an image!)
 
-```ARTIST='928347ec-58f4-499c-a629-9ac4ca07db6d'
+```
+ARTIST='928347ec-58f4-499c-a629-9ac4ca07db6d'
 
 curl -fsS -X POST \
   "http://127.0.0.1:5001/artist/$ARTIST/refresh" |
@@ -59,7 +60,8 @@ curl -fsS \
 
 ## 5. Flush Artist Caches
 
-```docker compose exec -T db psql \
+```
+docker compose exec -T db psql \
   -U musicbrainz \
   -d lm_cache_db \
   -c 'TRUNCATE TABLE artist;'
