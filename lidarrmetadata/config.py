@@ -301,6 +301,7 @@ class DefaultConfig(six.with_metaclass(ConfigMeta, ConfigBase)):
         'redis': DAYS * 7,
         'fanart': DAYS * 30,
         'tadb': DAYS * 30,
+        'deezer': DAYS * 7,
         'wikipedia': DAYS * 7
     }
     
@@ -441,6 +442,9 @@ class DefaultConfig(six.with_metaclass(ConfigMeta, ConfigBase)):
     # TADB API credentials
     TADB_KEY = '1'
 
+    # BrainzMash cache proxy for linked Deezer artist artwork
+    DEEZER_PROXY_URL = 'https://tadb.brainzmash.cc/deezer'
+
     # Port to use
     HTTP_PORT = 5001
 
@@ -476,6 +480,7 @@ class DefaultConfig(six.with_metaclass(ConfigMeta, ConfigBase)):
         'FANARTTVPROVIDER': ([FANART_KEY], {}),
         'WIKIPEDIAPROVIDER': ([], {}),
         'THEAUDIODBPROVIDER': ([TADB_KEY], {}),
+        'DEEZERPROVIDER': ([DEEZER_PROXY_URL], {}),
         'SPOTIFYAUTHPROVIDER': ([], {'CLIENT_ID': SPOTIFY_ID, 'CLIENT_SECRET': SPOTIFY_SECRET, 'REDIRECT_URI': SPOTIFY_REDIRECT_URL}),
         'SPOTIFYPROVIDER': ([], {'CLIENT_ID': SPOTIFY_ID, 'CLIENT_SECRET': SPOTIFY_SECRET})
     }
