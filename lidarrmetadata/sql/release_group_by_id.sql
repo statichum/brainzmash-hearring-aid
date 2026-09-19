@@ -85,30 +85,13 @@ SELECT
 	SELECT
 	  json_agg(row_to_json(images_data))
 	  FROM (
-	    -- Prefer the release selected by Cover Art Archive for this release
-	    -- group. When none is selected, use CAA order and release date.
-	    SELECT DISTINCT ON (type)
-	           unnest(types) AS type,
+	    SELECT unnest(types) AS type,
 		   release.gid AS release_gid,
 		   index_listing.id AS image_id
 	      FROM cover_art_archive.index_listing
 		     JOIN release ON index_listing.release = release.id
-		     LEFT JOIN (
-		       SELECT release, date_year, date_month, date_day
-		         FROM musicbrainz.release_country
-		       UNION ALL
-		       SELECT release, date_year, date_month, date_day
-		         FROM musicbrainz.release_unknown_country
-		     ) release_event ON release_event.release = release.id
-		     LEFT JOIN cover_art_archive.release_group_cover_art
-		       ON release_group_cover_art.release = release.id
 	     WHERE release.release_group = release_group.id
-	     ORDER BY type,
-	              release_group_cover_art.release,
-	              index_listing.ordering,
-	              release_event.date_year,
-	              release_event.date_month,
-	              release_event.date_day
+	     ORDER BY index_listing.ordering ASC
 	  ) images_data
       ) AS images,
       (
